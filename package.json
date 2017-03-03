@@ -1,0 +1,26 @@
+{
+  "name": "fint-consumer-client-elm",
+  "version": "1.0.0",
+  "description": "Eksempel-klient for å teste funksjonalitet i API til felleskomponent til [FINT-prosjektet](http://fintprosjektet.no)",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+ "devDependencies": {
+    "create-elm-app": "^0.3.2"
+  },
+  "scripts": {
+    "start": "elm-app start"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eidjord/fint-consumer-client-elm.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/eidjord/fint-consumer-client-elm/issues"
+  },
+  "homepage": "https://github.com/eidjord/fint-consumer-client-elm#readme"
+}
