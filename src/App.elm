@@ -179,7 +179,10 @@ viewPersonalressurs model =
             div [] [ text "Henter data...", Loading.indeterminate ]
 
         Failure err ->
-            text ("Error: " ++ toString err)
+            div []
+                [ text ("Error: " ++ toString err)
+                , text ("API støtter ikke CORS, så du må aktivere dette i nettleseren. Feks ved å installere dette plugin: https://chrome.google.com/webstore/detail/allow-control-allow-origi/nlfbmbojpeacfghkpbjhddihlkkiljbi")
+                ]
 
         Success pr ->
             text ("Ansattnummer: " ++ pr.ansattnummer)
