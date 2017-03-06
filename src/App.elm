@@ -25,11 +25,15 @@ type alias Model =
     , personer : WebData (List Person)
     , personalressurs : WebData Personalressurs
     , selectedPerson : Maybe Person
+    , soek : String
     }
 
 
 type alias Personalressurs =
-    { ansattnummer : String }
+    { ansattnummer : String
+    , brukernavn : String
+    , personalressurskategori : String
+    }
 
 
 init : String -> ( Model, Cmd Msg )
@@ -38,6 +42,7 @@ init path =
       , personer = Loading
       , personalressurs = NotAsked
       , selectedPerson = Nothing
+      , soek = ""
       }
     , getPersoner
     )
@@ -59,8 +64,10 @@ getPersonalressurs url =
 
 decodePersonalressurs : Decode.Decoder Personalressurs
 decodePersonalressurs =
-    Decode.map Personalressurs
+    Decode.map3 Personalressurs
         (at [ "ansattnummer", "identifikatorverdi" ] Decode.string)
+        (at [ "brukernavn", "identifikatorverdi" ] Decode.string)
+        (at [ "personalressurskategori", "navn" ] Decode.string)
 
 
 type Msg
@@ -69,6 +76,7 @@ type Msg
     | PersonsResponse (WebData (List Person))
     | PersonalressursResponse (WebData Personalressurs)
     | VelgPerson Person
+    | Upd0 String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -89,6 +97,9 @@ update msg model =
         VelgPerson p ->
             ( { model | selectedPerson = Just p, personalressurs = NotAsked }, Cmd.none )
 
+        Upd0 t ->
+            ( { model | soek = t }, Cmd.none )
+
 
 view : Model -> Html Msg
 view model =
@@ -96,7 +107,8 @@ view model =
         [ Textfield.render Mdl
             [ 1 ]
             model.mdl
-            [ Textfield.label "Søk..."
+            [ Options.onInput Upd0
+            , Textfield.label "Søk på fødselsnummer..."
             , Textfield.floatingLabel
             , Textfield.expandable "id-of-expandable-1"
             , Textfield.expandableIcon "search"
@@ -104,7 +116,10 @@ view model =
             []
         , grid []
             [ cell [ size All 6 ] [ viewPersoner model ]
-            , cell [ size All 6 ] [ visEnPerson model ]
+            , cell [ size All 6 ]
+                [ visEnPerson model
+                , viewPersonalressurs model
+                ]
             ]
         ]
 
@@ -124,7 +139,6 @@ visEnPerson model =
                     ]
                 , Card.text []
                     [ viewPostadresse p.postadresse
-                    , viewPersonalressurs model
                     ]
                 , Card.actions [ Card.border ]
                     [ Button.render Mdl
@@ -163,29 +177,56 @@ viewPersoner model =
             div [] [ text "Henter data...", Loading.indeterminate ]
 
         Failure err ->
-            text ("Error: " ++ toString err)
+            if ((toString err) == "NetworkError") then
+                text ("FINT-API støtter ikke CORS, så du må aktivere dette i nettleseren. Feks ved å installere dette plugin: https://chrome.google.com/webstore/detail/allow-control-allow-origi/nlfbmbojpeacfghkpbjhddihlkkiljbi")
+            else
+                text ("Error: " ++ toString err)
 
         Success personer ->
-            Lists.ul [] <| List.map viewPerson personer
+            Lists.ul [] <|
+                List.map viewPerson
+                    (personer
+                        |> List.filter (String.contains model.soek << .foedselsnummer)
+                    )
 
 
 viewPersonalressurs : Model -> Html Msg
 viewPersonalressurs model =
     case model.personalressurs of
         NotAsked ->
-            div [] [ text "Ikke spurt etter data..." ]
+            text ""
 
         Loading ->
             div [] [ text "Henter data...", Loading.indeterminate ]
 
         Failure err ->
-            div []
-                [ text ("Error: " ++ toString err)
-                , text ("API støtter ikke CORS, så du må aktivere dette i nettleseren. Feks ved å installere dette plugin: https://chrome.google.com/webstore/detail/allow-control-allow-origi/nlfbmbojpeacfghkpbjhddihlkkiljbi")
-                ]
+            text ("Error: " ++ toString err)
 
         Success pr ->
-            text ("Ansattnummer: " ++ pr.ansattnummer)
+            Card.view [ Elevation.e2, Color.background (Color.color Color.Grey Color.S300) ]
+                [ Card.title []
+                    [ Card.head []
+                        [ text <| "Personalressurs"
+                        ]
+                    ]
+                , Card.text []
+                    [ Html.ul []
+                        [ Html.li [] [ text <| "Ansattnummer: " ++ pr.ansattnummer ]
+                        , Html.li [] [ text <| "Brukernavn: " ++ pr.brukernavn ]
+                        , Html.li [] [ text <| "Personalressurskategori: " ++ pr.personalressurskategori ]
+                        ]
+                    ]
+                , Card.actions [ Card.border ]
+                    [ Button.render Mdl
+                        [ 1, 0 ]
+                        model.mdl
+                        [ Button.ripple
+                        , Button.accent
+                          --, Options.attribute <| Html.Events.onClick (GetPersonalressurs p.links.personalressurs)
+                        ]
+                        [ text "Vis arbeidsforhold (todo ;)" ]
+                    ]
+                ]
 
 
 viewPerson : Person -> Html Msg
