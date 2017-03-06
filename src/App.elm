@@ -241,6 +241,8 @@ viewPerson person =
                 (person.navn.etternavn
                     ++ ", "
                     ++ person.navn.fornavn
+                    ++ " "
+                    ++ person.navn.mellomnavn
                 )
             , Lists.body []
                 [ text
