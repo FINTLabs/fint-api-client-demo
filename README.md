@@ -2,6 +2,9 @@ Eksempel-klient for å teste funksjonalitet i API til felleskomponent til [FINT-
 
 [![Build status](https://ci.appveyor.com/api/projects/status/0i2rlst15ffw3tdl?svg=true)](https://ci.appveyor.com/project/eidjord/fint-consumer-client-elm)
 
+Demo: https://fint-consumer-client-elm.firebaseapp.com/
+
+
 For å starte websiden ([http://localhost:3000](http://localhost:3000)):
 
 ```
