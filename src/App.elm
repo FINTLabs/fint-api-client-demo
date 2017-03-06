@@ -104,13 +104,13 @@ view model =
             []
         , grid []
             [ cell [ size All 6 ] [ viewPersoner model ]
-            , cell [ size All 6 ] [ visMeg model ]
+            , cell [ size All 6 ] [ visEnPerson model ]
             ]
         ]
 
 
-visMeg : Model -> Html Msg
-visMeg model =
+visEnPerson : Model -> Html Msg
+visEnPerson model =
     case model.selectedPerson of
         Nothing ->
             div [] [ text "Velg en person i lista til venstre..." ]
