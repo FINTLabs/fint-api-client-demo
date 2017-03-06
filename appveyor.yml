@@ -2,10 +2,14 @@ version: 1.0.{build}
 build_script:
 - cmd: >-
     npm install -g elm
+
     npm install -g create-elm-app
+
     npm install -g glob
+
     elm-app build
 deploy_script:
 - cmd: >-
     npm install -g firebase-tools
+
     firebase deploy --non-interactive --only hosting --project fint-consumer-client-elm  --token="%FIREBASE_API_TOKEN%"
