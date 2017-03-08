@@ -24,6 +24,7 @@ type alias Model =
     { mdl : Material.Model
     , personer : WebData (List Person)
     , personalressurs : WebData Personalressurs
+    , arbeidsforhold : WebData Arbeidsforhold
     , selectedPerson : Maybe Person
     , soek : String
     }
@@ -33,6 +34,26 @@ type alias Personalressurs =
     { ansattnummer : String
     , brukernavn : String
     , personalressurskategori : String
+    , links : Links
+    }
+
+
+type alias Links =
+    { self : String
+    , arbeidsforhold : String
+    }
+
+
+type alias Arbeidsforhold =
+    { arbeidsforholdsnummer : String
+    , stillingskode : Stillingskode
+    }
+
+
+type alias Stillingskode =
+    { kode : String
+    , navn : String
+    , ksKode : String
     }
 
 
@@ -41,6 +62,7 @@ init path =
     ( { mdl = Material.model
       , personer = Loading
       , personalressurs = NotAsked
+      , arbeidsforhold = NotAsked
       , selectedPerson = Nothing
       , soek = ""
       }
@@ -62,19 +84,51 @@ getPersonalressurs url =
         |> Cmd.map PersonalressursResponse
 
 
+getArbeidsforhold : String -> Cmd Msg
+getArbeidsforhold url =
+    Http.get url decodeArbeidsforholder
+        |> RemoteData.sendRequest
+        |> Cmd.map ArbeidsforholdResponse
+
+
 decodePersonalressurs : Decode.Decoder Personalressurs
 decodePersonalressurs =
-    Decode.map3 Personalressurs
+    Decode.map4 Personalressurs
         (at [ "ansattnummer", "identifikatorverdi" ] Decode.string)
         (at [ "brukernavn", "identifikatorverdi" ] Decode.string)
         (at [ "personalressurskategori", "navn" ] Decode.string)
+        (field "_links" decodeLinks)
+
+
+decodeLinks : Decode.Decoder Links
+decodeLinks =
+    Decode.map2 Links
+        (at [ "self", "href" ] Decode.string)
+        (at [ "arbeidsforhold", "href" ] Decode.string)
+
+
+decodeArbeidsforholder : Decode.Decoder Arbeidsforhold
+decodeArbeidsforholder =
+    Decode.map2 Arbeidsforhold
+        (field "stillingsnummer" Decode.string)
+        (field "stillingskode" decodeStillingskode)
+
+
+decodeStillingskode : Decode.Decoder Stillingskode
+decodeStillingskode =
+    Decode.map3 Stillingskode
+        (field "kode" Decode.string)
+        (field "navn" Decode.string)
+        (field "ksKode" Decode.string)
 
 
 type Msg
     = Mdl (Material.Msg Msg)
     | GetPersonalressurs String
+    | GetArbeidsforhold String
     | PersonsResponse (WebData (List Person))
     | PersonalressursResponse (WebData Personalressurs)
+    | ArbeidsforholdResponse (WebData Arbeidsforhold)
     | VelgPerson Person
     | Upd0 String
 
@@ -86,7 +140,10 @@ update msg model =
             Material.update Mdl m model
 
         GetPersonalressurs s ->
-            ( { model | personalressurs = Loading }, getPersonalressurs s )
+            ( { model | personalressurs = Loading, arbeidsforhold = NotAsked }, getPersonalressurs s )
+
+        GetArbeidsforhold s ->
+            ( { model | arbeidsforhold = Loading }, getArbeidsforhold s )
 
         PersonsResponse response ->
             ( { model | personer = response }, Cmd.none )
@@ -94,8 +151,11 @@ update msg model =
         PersonalressursResponse response ->
             ( { model | personalressurs = response }, Cmd.none )
 
+        ArbeidsforholdResponse response ->
+            ( { model | arbeidsforhold = response }, Cmd.none )
+
         VelgPerson p ->
-            ( { model | selectedPerson = Just p, personalressurs = NotAsked }, Cmd.none )
+            ( { model | selectedPerson = Just p, personalressurs = NotAsked, arbeidsforhold = NotAsked }, Cmd.none )
 
         Upd0 t ->
             ( { model | soek = t }, Cmd.none )
@@ -119,6 +179,7 @@ view model =
             , cell [ size All 6 ]
                 [ visEnPerson model
                 , viewPersonalressurs model
+                , viewArbeidsforhold model
                 ]
             ]
         ]
@@ -222,9 +283,36 @@ viewPersonalressurs model =
                         model.mdl
                         [ Button.ripple
                         , Button.accent
-                          --, Options.attribute <| Html.Events.onClick (GetPersonalressurs p.links.personalressurs)
+                        , Options.attribute <| Html.Events.onClick (GetArbeidsforhold pr.links.arbeidsforhold)
                         ]
-                        [ text "Vis arbeidsforhold (todo ;)" ]
+                        [ text "Vis arbeidsforhold" ]
+                    ]
+                ]
+
+
+viewArbeidsforhold : Model -> Html Msg
+viewArbeidsforhold model =
+    case model.arbeidsforhold of
+        NotAsked ->
+            text ""
+
+        Loading ->
+            div [] [ text "Henter data...", Loading.indeterminate ]
+
+        Failure err ->
+            text ("Error: " ++ toString err)
+
+        Success a ->
+            Card.view [ Elevation.e2, Color.background (Color.color Color.Grey Color.S300) ]
+                [ Card.title []
+                    [ Card.head []
+                        [ text <| "Arbeidsforhold"
+                        ]
+                    ]
+                , Card.text []
+                    [ Html.ul []
+                        [ Html.li [] [ text <| "Stillingsnummer: " ++ a.arbeidsforholdsnummer ]
+                        ]
                     ]
                 ]
 
