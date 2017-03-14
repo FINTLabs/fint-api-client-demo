@@ -4,6 +4,8 @@ import Json.Decode as Decode exposing (at, field)
 import Personalressurs.Model exposing (..)
 
 
+{-| Decode personalressurs
+-}
 decodePersonalressurs : Decode.Decoder Personalressurs
 decodePersonalressurs =
     Decode.map4 Personalressurs

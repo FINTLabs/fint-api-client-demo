@@ -122,7 +122,7 @@ view model =
         , main =
             [ div []
                 [ Textfield.render Mdl
-                    [ 1 ]
+                    [ 1, 0 ]
                     model.mdl
                     [ Options.onInput StartSok
                     , Textfield.label "Søk på fødselsnummer..."
@@ -162,7 +162,7 @@ visEnPerson model =
                     ]
                 , Card.actions [ Card.border ]
                     [ Button.render Mdl
-                        [ 1, 0 ]
+                        [ 1, 1 ]
                         model.mdl
                         [ Button.ripple
                         , Button.accent
