@@ -11,7 +11,7 @@ import Person.Model exposing (..)
 
 decodePersoner : Decode.Decoder (List Person)
 decodePersoner =
-    Decode.at [ "_embedded", "personList" ] (Decode.list decodePerson)
+    Decode.at [ "_embedded", "_entries" ] (Decode.list decodePerson)
 
 
 decodePerson : Decode.Decoder Person
