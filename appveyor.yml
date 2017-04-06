@@ -10,6 +10,6 @@ build_script:
     elm-app build
 deploy_script:
 - cmd: >-
-    npm install -g firebase-tools
+    npm install -g firebase-tools@3.5.0
 
     firebase deploy --non-interactive --only hosting --project fint-consumer-client-elm  --token="%FIREBASE_API_TOKEN%"
