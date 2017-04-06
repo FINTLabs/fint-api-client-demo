@@ -1,7 +1,19 @@
-module Arbeidsforhold.Decoder exposing (..)
+module Module.Personal.Arbeidsforhold exposing (..)
 
-import Arbeidsforhold.Model exposing (..)
 import Json.Decode as Decode exposing (..)
+
+
+type alias Arbeidsforhold =
+    { arbeidsforholdsnummer : String
+    , stillingskode : Stillingskode
+    }
+
+
+type alias Stillingskode =
+    { kode : String
+    , navn : String
+    , ksKode : String
+    }
 
 
 {-| Decode a single arbeidsforhold

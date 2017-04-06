@@ -1,14 +1,50 @@
-module Person.Decoder exposing (..)
+module Module.Personal.Person exposing (..)
+
+import Json.Decode as Decode exposing (Decoder, at, field)
+
+
+type alias Person =
+    { foedselsnummer : String
+    , navn : Navn
+    , kontatinformasjon : Kontaktinformasjon
+    , postadresse : Postadresse
+    , links : Links
+    }
+
+
+type alias Navn =
+    { fornavn : String
+    , etternavn : String
+    , mellomnavn : String
+    }
+
+
+type alias Kontaktinformasjon =
+    { epostadresse : String
+    , telefonnummer : String
+    , mobiltelefonnummer : String
+    , nettsted : String
+    }
+
+
+type alias Postadresse =
+    { adresse : String
+    , postnummer : String
+    , poststed : String
+    , land : String
+    }
+
+
+type alias Links =
+    { self : String
+    , personalressurs : String
+    }
+
 
 {-| Module to decode a list of persons.
 
 Includes an example on how underlying decoders can be organized. Alt. a, b & c.
 -}
-
-import Json.Decode as Decode exposing (Decoder, at, field)
-import Person.Model exposing (..)
-
-
 decodePersoner : Decode.Decoder (List Person)
 decodePersoner =
     Decode.at [ "_embedded", "_entries" ] (Decode.list decodePerson)
