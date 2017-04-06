@@ -5,7 +5,7 @@ import Html.Events
 import Http exposing (..)
 import Json.Decode as Decode
 import Material as Material
-import RemoteData exposing (WebData, sendRequest)
+import RemoteData exposing (RemoteData(NotAsked), WebData, sendRequest)
 
 
 -- MODEL
@@ -14,7 +14,7 @@ import RemoteData exposing (WebData, sendRequest)
 type alias Model =
     { mdl : Material.Model
     , kodeverk : List ( String, String )
-    , kodeliste : List Begrep
+    , kodeliste : WebData (List Begrep)
     }
 
 
@@ -31,7 +31,7 @@ model =
         [ ( "5218", "Kjønn" )
         , ( "31661alpha2", "Land" )
         ]
-    , kodeliste = []
+    , kodeliste = NotAsked
     }
 
 
@@ -55,7 +55,7 @@ update msg model =
             ( model, lastKodeverk iso )
 
         KodeverkResponse response ->
-            model ! []
+            { model | kodeliste = response } ! []
 
 
 view : Model -> Html Msg
