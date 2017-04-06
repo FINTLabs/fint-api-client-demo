@@ -49,6 +49,7 @@ model =
 
 type Msg
     = Mdl (Material.Msg Msg)
+    | GetPersoner
     | GetPersonalressurs String
     | GetArbeidsforhold String
     | PersonsResponse (WebData (List Person))
@@ -63,6 +64,9 @@ update msg model =
     case msg of
         Mdl m ->
             Material.update Mdl m model
+
+        GetPersoner ->
+            ( model, getPersoner urlPersoner )
 
         GetPersonalressurs s ->
             ( { model | personalressurs = Loading, arbeidsforhold = NotAsked }, getPersonalressurs s )
@@ -167,7 +171,17 @@ viewPersoner model =
             div [] [ text "Henter data...", Loading.indeterminate ]
 
         Failure err ->
-            text ("Error: " ++ toString err)
+            div []
+                [ text ("Error: " ++ toString err)
+                , Button.render Mdl
+                    [ 1, 1 ]
+                    model.mdl
+                    [ Button.ripple
+                    , Button.accent
+                    , Options.attribute <| Html.Events.onClick GetPersoner
+                    ]
+                    [ text "Last inn på nytt" ]
+                ]
 
         Success personer ->
             Lists.ul [] <|

@@ -5,12 +5,14 @@ import Material as Material
 import Material.Helpers as Helpers
 import Material.Layout as Layout exposing (selectedTab)
 import Module.Personal as Personal
+import Module.Kodeverk as Kodeverk
 
 
 type alias Model =
     { mdl : Material.Model
     , selectedTab : Int
     , personal : Personal.Model
+    , kodeverk : Kodeverk.Model
     }
 
 
@@ -19,6 +21,7 @@ model =
     { mdl = Material.model
     , selectedTab = 0
     , personal = Personal.model
+    , kodeverk = Kodeverk.model
     }
 
 
@@ -29,20 +32,11 @@ init path =
     )
 
 
-{-| Url til iso-kodeverk
-    - 5218 = Kjønn
-    - 31661alpha2 = Land
-    - ...
--}
-urlKodeverkIso : String -> String
-urlKodeverkIso iso =
-    "https://api.felleskomponent.no/felles/kodeverk/iso/" ++ iso
-
-
 type Msg
     = Mdl (Material.Msg Msg)
     | SelectTab Int
     | PersonalMsg Personal.Msg
+    | KodeverkMsg Kodeverk.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -63,6 +57,9 @@ update msg model =
                 personalMsg
                 model
 
+        KodeverkMsg msg_ ->
+            Helpers.lift .kodeverk (\m x -> { m | kodeverk = x }) KodeverkMsg Kodeverk.update msg_ model
+
 
 view : Model -> Html Msg
 view model =
@@ -74,19 +71,14 @@ view model =
         ]
         { header = [ Layout.row [] [ Layout.title [] [ text "FINT klienteksempel" ] ] ]
         , drawer = []
-        , tabs =
-            ( [ text "Personal"
-              , text "Kodeverk"
-              ]
-            , []
-            )
+        , tabs = ( [ text "Personal", text "Kodeverk" ], [] )
         , main =
             [ case model.selectedTab of
                 0 ->
                     Html.map PersonalMsg (Personal.viewPersonal model.personal)
 
                 1 ->
-                    text "her kommer uttrekk av iso-kodeverk"
+                    Html.map KodeverkMsg (Kodeverk.view model.kodeverk)
 
                 _ ->
                     text "404"
