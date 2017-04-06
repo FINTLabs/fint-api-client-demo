@@ -11,7 +11,7 @@ import Material.Card as Card
 import Material.Color as Color
 import Material.Elevation as Elevation
 import Material.Grid as Grid exposing (..)
-import Material.Layout as Layout
+import Material.Layout as Layout exposing (selectedTab)
 import Material.List as Lists
 import Material.Options as Options exposing (css)
 import Material.Progress as Loading
@@ -25,6 +25,7 @@ import RemoteData exposing (RemoteData(Failure), RemoteData(Loading), RemoteData
 
 type alias Model =
     { mdl : Material.Model
+    , selectedTab : Int
     , personer : WebData (List Person)
     , personalressurs : WebData Personalressurs
     , arbeidsforhold : WebData Arbeidsforhold
@@ -36,25 +37,37 @@ type alias Model =
 init : String -> ( Model, Cmd Msg )
 init path =
     ( { mdl = Material.model
+      , selectedTab = 0
       , personer = Loading
       , personalressurs = NotAsked
       , arbeidsforhold = NotAsked
       , selectedPerson = Nothing
       , soek = ""
       }
-    , getPersoner
+    , getPersoner urlPersoner
     )
 
 
-getPersoner : Cmd Msg
-getPersoner =
-    let
-        url =
-            "https://api.felleskomponent.no/mocks/administrasjon/personal/person"
-    in
-        Http.get url PersonDecoder.decodePersoner
-            |> RemoteData.sendRequest
-            |> Cmd.map PersonsResponse
+urlPersoner : String
+urlPersoner =
+    "https://api.felleskomponent.no/mocks/administrasjon/personal/person"
+
+
+{-| Url til iso-kodeverk
+    - 5218 = Kjønn
+    - 31661alpha2 = Land
+    - ...
+-}
+urlKodeverkIso : String -> String
+urlKodeverkIso iso =
+    "https://api.felleskomponent.no/felles/kodeverk/iso/" ++ iso
+
+
+getPersoner : String -> Cmd Msg
+getPersoner url =
+    Http.get url PersonDecoder.decodePersoner
+        |> RemoteData.sendRequest
+        |> Cmd.map PersonsResponse
 
 
 getPersonalressurs : String -> Cmd Msg
@@ -73,6 +86,7 @@ getArbeidsforhold url =
 
 type Msg
     = Mdl (Material.Msg Msg)
+    | SelectTab Int
     | GetPersonalressurs String
     | GetArbeidsforhold String
     | PersonsResponse (WebData (List Person))
@@ -87,6 +101,9 @@ update msg model =
     case msg of
         Mdl m ->
             Material.update Mdl m model
+
+        SelectTab nr ->
+            { model | selectedTab = nr } ! []
 
         GetPersonalressurs s ->
             ( { model | personalressurs = Loading, arbeidsforhold = NotAsked }, getPersonalressurs s )
@@ -115,33 +132,54 @@ view model =
     Layout.render Mdl
         model.mdl
         [ Layout.fixedHeader
+        , Layout.selectedTab model.selectedTab
+        , Layout.onSelectTab SelectTab
         ]
         { header = [ Layout.row [] [ Layout.title [] [ text "FINT klienteksempel" ] ] ]
         , drawer = []
-        , tabs = ( [], [] )
+        , tabs =
+            ( [ text "Personal"
+              , text "Kodeverk"
+              ]
+            , []
+            )
         , main =
-            [ div []
-                [ Textfield.render Mdl
-                    [ 1, 0 ]
-                    model.mdl
-                    [ Options.onInput StartSok
-                    , Textfield.label "Søk på fødselsnummer..."
-                    , Textfield.floatingLabel
-                    , Textfield.expandable "id-of-expandable-1"
-                    , Textfield.expandableIcon "search"
-                    ]
-                    []
-                , grid []
-                    [ cell [ size All 6 ] [ viewPersoner model ]
-                    , cell [ size All 6 ]
-                        [ visEnPerson model
-                        , viewPersonalressurs model
-                        , viewArbeidsforhold model
-                        ]
-                    ]
-                ]
+            [ case model.selectedTab of
+                0 ->
+                    viewPersonal model
+
+                1 ->
+                    text "her kommer uttrekk av iso-kodeverk"
+
+                _ ->
+                    text "404"
             ]
         }
+
+
+viewPersonal : Model -> Html Msg
+viewPersonal model =
+    div []
+        [ Textfield.render Mdl
+            [ 1, 0 ]
+            model.mdl
+            [ Options.onInput StartSok
+            , Textfield.label "Søk på fødselsnummer..."
+            , Textfield.floatingLabel
+            , Textfield.expandable "id-of-expandable-1"
+            , Textfield.expandableIcon "search"
+            ]
+            []
+        , grid []
+            [ cell [ size All 6 ] [ viewPersoner model ]
+            , cell [ size All 6 ]
+                [ visEnPerson model
+                , viewPersonalressurs model
+                , viewArbeidsforhold model
+                ]
+            ]
+        , text <| "Tab: " ++ toString model.selectedTab
+        ]
 
 
 visEnPerson : Model -> Html Msg
