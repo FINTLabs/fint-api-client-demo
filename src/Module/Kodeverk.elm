@@ -5,7 +5,9 @@ import Html.Events
 import Http exposing (..)
 import Json.Decode as Decode
 import Material as Material
-import RemoteData exposing (RemoteData(NotAsked), WebData, sendRequest)
+import Material.Table as Table
+import Material.Progress as Loading
+import RemoteData exposing (RemoteData(NotAsked, Success, Loading, Failure), WebData, sendRequest)
 
 
 -- MODEL
@@ -52,7 +54,7 @@ update msg model =
             Material.update Mdl m model
 
         LastKodeverk iso ->
-            ( model, lastKodeverk iso )
+            ( { model | kodeliste = Loading }, lastKodeverk iso )
 
         KodeverkResponse response ->
             { model | kodeliste = response } ! []
@@ -61,13 +63,37 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div []
-        [ text <| "" ++ (toString model.kodeliste)
-        , ul [] <|
-            List.map
-                (\( a, b ) ->
-                    li [ Html.Events.onClick (LastKodeverk a) ] [ text (b ++ " " ++ a) ]
-                )
-                model.kodeverk
+        [ ul []
+            (model.kodeverk
+                |> List.map
+                    (\( a, b ) ->
+                        li [ Html.Events.onClick (LastKodeverk a) ] [ text (b ++ " " ++ a) ]
+                    )
+            )
+        , case model.kodeliste of
+            Success kodeliste ->
+                Table.table []
+                    [ Table.thead [] [ Table.tr [] [ Table.th [] [ text "Kode" ], Table.th [] [ text "Navn" ] ] ]
+                    , Table.tbody []
+                        (kodeliste
+                            |> List.map
+                                (\kode ->
+                                    Table.tr []
+                                        [ Table.td [] [ text kode.kode ]
+                                        , Table.td [] [ text kode.navn ]
+                                        ]
+                                )
+                        )
+                    ]
+
+            NotAsked ->
+                text "Velg ett kodeverk i lista."
+
+            Loading ->
+                div [] [ text "Henter data...", Loading.indeterminate ]
+
+            Failure e ->
+                text <| "Feil: " ++ toString e
         ]
 
 
