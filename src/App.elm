@@ -18,11 +18,12 @@ type alias Model =
     , kodeverk : Kodeverk.Model
     , navbarState : Navbar.State
     , selectedPage : Page
+    , logo : String
     }
 
 
-init : Page -> ( Model, Cmd Msg )
-init page =
+init : Page -> String -> ( Model, Cmd Msg )
+init page logo =
     let
         ( navbarState, navbarCmd ) =
             Navbar.initialState NavbarMsg
@@ -34,6 +35,7 @@ init page =
             , kodeverk = Kodeverk.model
             , navbarState = navbarState
             , selectedPage = page
+            , logo = logo
             }
     in
         ( model
@@ -89,7 +91,7 @@ navbarView model =
         |> Navbar.withAnimation
         |> Navbar.brand [ Routing.href Index ]
             [ img
-                [ src "src/assets/fint.svg"
+                [ src model.logo
                 , class "d-inline-block align-top"
                 , style [ ( "width", "75px" ), ( "margin-right", "10px" ) ]
                 ]

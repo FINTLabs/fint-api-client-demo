@@ -5,18 +5,19 @@ import Routing as Routing
 import Navigation exposing (Location)
 
 
-init : Location -> ( Model, Cmd Msg )
-init location =
+init : String -> Location -> ( Model, Cmd Msg )
+init logo location =
     let
         currentPage =
             Routing.parseLocation location
     in
-        App.init currentPage
+        App.init currentPage logo
 
 
-main : Program Never Model Msg
+main : Program String Model Msg
 main =
-    Navigation.program App.OnLocationChange
+    Navigation.programWithFlags
+        App.OnLocationChange
         { view = view
         , init = init
         , update = update
