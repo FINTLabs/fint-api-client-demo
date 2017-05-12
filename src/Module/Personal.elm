@@ -1,22 +1,23 @@
 module Module.Personal exposing (..)
 
+import Bootstrap.Button as Button
+import Bootstrap.Form.Input as Input
+import Bootstrap.Grid as Grid
+import Bootstrap.Grid.Col as Col
+import Bootstrap.Grid.Row as Row
+import Bootstrap.ListGroup as ListGroup
+import Bootstrap.Progress as Progress
+import Html exposing (..)
+import Html.Attributes as Attr exposing (class, href)
+import Html.Events as Events exposing (..)
+import Http exposing (..)
+import Material
+import Material.Card as Card
+import Material.Elevation as Elevation
 import Module.Personal.Arbeidsforhold as Arbeidsforhold exposing (Arbeidsforhold)
 import Module.Personal.Person as Person exposing (Person, Postadresse)
 import Module.Personal.Personalressurs as Personalressurs exposing (Personalressurs)
-import Html exposing (Html, button, div, img, li, text)
-import Html.Events exposing (..)
-import Http exposing (..)
-import Material
-import Material.Button as Button
-import Material.Card as Card
-import Material.Color as Color
-import Material.Elevation as Elevation
-import Material.Grid as Grid exposing (..)
-import Material.List as Lists
-import Material.Options as Options exposing (css)
-import Material.Progress as Loading
-import Material.Textfield as Textfield
-import RemoteData exposing (RemoteData(NotAsked, Loading, Failure, Success), WebData)
+import RemoteData exposing (RemoteData(Failure), RemoteData(Loading), RemoteData(NotAsked, Success), WebData)
 
 
 -- MODEL
@@ -68,23 +69,31 @@ update msg model =
         GetPersoner ->
             ( model, getPersoner urlPersoner )
 
-        GetPersonalressurs s ->
-            ( { model | personalressurs = Loading, arbeidsforhold = NotAsked }, getPersonalressurs s )
-
-        GetArbeidsforhold s ->
-            ( { model | arbeidsforhold = Loading }, getArbeidsforhold s )
-
         PersonsResponse response ->
             ( { model | personer = response }, Cmd.none )
+
+        GetPersonalressurs s ->
+            ( { model | personalressurs = Loading, arbeidsforhold = NotAsked }
+            , getPersonalressurs s
+            )
 
         PersonalressursResponse response ->
             ( { model | personalressurs = response }, Cmd.none )
 
+        GetArbeidsforhold s ->
+            ( { model | arbeidsforhold = Loading }, getArbeidsforhold s )
+
         ArbeidsforholdResponse response ->
             ( { model | arbeidsforhold = response }, Cmd.none )
 
-        VelgPerson p ->
-            ( { model | selectedPerson = Just p, personalressurs = NotAsked, arbeidsforhold = NotAsked }, Cmd.none )
+        VelgPerson person ->
+            ( { model
+                | selectedPerson = Just person
+                , personalressurs = NotAsked
+                , arbeidsforhold = NotAsked
+              }
+            , Cmd.none
+            )
 
         StartSok t ->
             ( { model | soek = t }, Cmd.none )
@@ -97,19 +106,18 @@ update msg model =
 viewPersonal : Model -> Html Msg
 viewPersonal model =
     div []
-        [ Textfield.render Mdl
-            [ 1, 0 ]
-            model.mdl
-            [ Options.onInput StartSok
-            , Textfield.label "Søk på fødselsnummer..."
-            , Textfield.floatingLabel
-            , Textfield.expandable "id-of-expandable-1"
-            , Textfield.expandableIcon "search"
+        [ Grid.row []
+            [ Grid.col [ Col.lg4 ]
+                [ --Options.onInput StartSok
+                  Input.search
+                    [ Input.onInput StartSok
+                    , Input.placeholder "Søk på fødselsnummer..."
+                    ]
+                ]
             ]
-            []
-        , grid []
-            [ cell [ size All 6 ] [ viewPersoner model ]
-            , cell [ size All 6 ]
+        , Grid.row []
+            [ Grid.col [] [ viewPersoner model ]
+            , Grid.col []
                 [ visEnPerson model
                 , viewPersonalressurs model
                 , viewArbeidsforhold model
@@ -125,7 +133,7 @@ visEnPerson model =
             div [] [ text "Velg en person i lista til venstre..." ]
 
         Just p ->
-            Card.view [ Elevation.e2, Color.background (Color.color Color.Grey Color.S300) ]
+            Card.view [ Elevation.e2 ]
                 [ Card.title []
                     [ Card.head []
                         [ text <| p.navn.fornavn ++ " " ++ p.navn.mellomnavn ++ " " ++ p.navn.etternavn
@@ -135,12 +143,10 @@ visEnPerson model =
                     [ viewPostadresse p.postadresse
                     ]
                 , Card.actions [ Card.border ]
-                    [ Button.render Mdl
-                        [ 1, 1 ]
-                        model.mdl
-                        [ Button.ripple
-                        , Button.accent
-                        , Options.attribute <| Html.Events.onClick (GetPersonalressurs p.links.personalressurs)
+                    [ Button.button
+                        [ Button.attrs
+                            [ onClick (GetPersonalressurs p.links.personalressurs)
+                            ]
                         ]
                         [ text "Vis Personalressurs" ]
                     ]
@@ -168,24 +174,28 @@ viewPersoner model =
             div [] [ text "Ikke spurt etter data..." ]
 
         Loading ->
-            div [] [ text "Henter data...", Loading.indeterminate ]
+            div []
+                [ text "Henter data..."
+                , Progress.progress [ Progress.value 100, Progress.animated ]
+                ]
 
         Failure err ->
             div []
                 [ text ("Error: " ++ toString err)
-                , Button.render Mdl
-                    [ 1, 1 ]
-                    model.mdl
-                    [ Button.ripple
-                    , Button.accent
-                    , Options.attribute <| Html.Events.onClick GetPersoner
+                , Button.button
+                    [ Button.attrs
+                        [ onClick GetPersoner
+                        ]
                     ]
                     [ text "Last inn på nytt" ]
                 ]
 
         Success personer ->
-            Lists.ul [] <|
-                List.map viewPerson
+            ListGroup.custom <|
+                List.map
+                    (viewPerson
+                        model
+                    )
                     (personer
                         |> List.filter (String.contains model.soek << .foedselsnummer)
                     )
@@ -198,13 +208,16 @@ viewPersonalressurs model =
             text ""
 
         Loading ->
-            div [] [ text "Henter data...", Loading.indeterminate ]
+            div []
+                [ text "Henter data..."
+                , Progress.progress [ Progress.value 100, Progress.animated ]
+                ]
 
         Failure err ->
             text ("Error: " ++ toString err)
 
         Success pr ->
-            Card.view [ Elevation.e2, Color.background (Color.color Color.Grey Color.S300) ]
+            Card.view [ Elevation.e2 ]
                 [ Card.title []
                     [ Card.head []
                         [ text <| "Personalressurs"
@@ -218,12 +231,10 @@ viewPersonalressurs model =
                         ]
                     ]
                 , Card.actions [ Card.border ]
-                    [ Button.render Mdl
-                        [ 1, 0 ]
-                        model.mdl
-                        [ Button.ripple
-                        , Button.accent
-                        , Options.attribute <| Html.Events.onClick (GetArbeidsforhold pr.links.arbeidsforhold)
+                    [ Button.button
+                        [ Button.attrs
+                            [ onClick (GetArbeidsforhold pr.links.arbeidsforhold)
+                            ]
                         ]
                         [ text "Vis arbeidsforhold" ]
                     ]
@@ -237,13 +248,16 @@ viewArbeidsforhold model =
             text ""
 
         Loading ->
-            div [] [ text "Henter data...", Loading.indeterminate ]
+            div []
+                [ text "Henter data..."
+                , Progress.progress [ Progress.value 100, Progress.animated ]
+                ]
 
         Failure err ->
             text ("Error: " ++ toString err)
 
         Success a ->
-            Card.view [ Elevation.e2, Color.background (Color.color Color.Grey Color.S300) ]
+            Card.view [ Elevation.e2 ]
                 [ Card.title []
                     [ Card.head []
                         [ text <| "Arbeidsforhold"
@@ -257,32 +271,38 @@ viewArbeidsforhold model =
                 ]
 
 
-viewPerson : Person -> Html Msg
-viewPerson person =
-    Lists.li [ Lists.withBody ]
-        [ Lists.content
-            [ css "cursor" "pointer"
-            , Options.attribute <| Html.Events.onClick (VelgPerson person)
+viewPerson : Model -> Person -> ListGroup.CustomItem Msg
+viewPerson model person =
+    ListGroup.anchor
+        [ ListGroup.attrs
+            [ href "#"
+            , class "flex-column align-items-start"
+            , onClick <| VelgPerson person
             ]
-            [ Lists.avatarIcon "inbox" []
-            , text
-                (person.navn.etternavn
-                    ++ ", "
-                    ++ person.navn.fornavn
-                    ++ " "
-                    ++ person.navn.mellomnavn
-                )
-            , Lists.body []
+        ]
+        [ div [ class "d-flex w-100 justify-content-between" ]
+            [ h5 [ class "mb-1" ]
                 [ text
-                    ("Adresse: "
-                        ++ person.postadresse.adresse
+                    (person.navn.etternavn
                         ++ ", "
-                        ++ person.postadresse.postnummer
+                        ++ person.navn.fornavn
                         ++ " "
-                        ++ person.postadresse.poststed
+                        ++ person.navn.mellomnavn
                     )
                 ]
+            , small [] [ text person.foedselsnummer ]
             ]
+        , p [ class "mb-1" ]
+            [ text
+                ("Adresse: "
+                    ++ person.postadresse.adresse
+                    ++ ", "
+                    ++ person.postadresse.postnummer
+                    ++ " "
+                    ++ person.postadresse.poststed
+                )
+            ]
+        , small [] [ text person.kontatinformasjon.epostadresse ]
         ]
 
 

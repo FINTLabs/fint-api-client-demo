@@ -1,42 +1,55 @@
 module App exposing (..)
 
-import Html exposing (Html, button, div, img, li, text)
+import Bootstrap.Grid as Grid
+import Bootstrap.Navbar as Navbar
+import Html exposing (..)
+import Html.Attributes as Attribute exposing (..)
 import Material as Material
-import Material.Helpers as Helpers
-import Material.Layout as Layout exposing (selectedTab)
-import Module.Personal as Personal
+import Helpers as Helpers
 import Module.Kodeverk as Kodeverk
+import Module.Personal as Personal
+import Navigation exposing (Location)
+import Routing exposing (..)
 
 
 type alias Model =
     { mdl : Material.Model
-    , selectedTab : Int
     , personal : Personal.Model
     , kodeverk : Kodeverk.Model
+    , navbarState : Navbar.State
+    , selectedPage : Page
     }
 
 
-model : Model
-model =
-    { mdl = Material.model
-    , selectedTab = 0
-    , personal = Personal.model
-    , kodeverk = Kodeverk.model
-    }
+init : Page -> ( Model, Cmd Msg )
+init page =
+    let
+        ( navbarState, navbarCmd ) =
+            Navbar.initialState NavbarMsg
 
-
-init : String -> ( Model, Cmd Msg )
-init path =
-    ( model
-    , Cmd.map PersonalMsg (Personal.getPersoner Personal.urlPersoner)
-    )
+        model =
+            { -- mdl kan snart fjernes :)
+              mdl = Material.model
+            , personal = Personal.model
+            , kodeverk = Kodeverk.model
+            , navbarState = navbarState
+            , selectedPage = page
+            }
+    in
+        ( model
+        , Cmd.batch
+            [ navbarCmd
+            , Cmd.map PersonalMsg (Personal.getPersoner Personal.urlPersoner)
+            ]
+        )
 
 
 type Msg
     = Mdl (Material.Msg Msg)
-    | SelectTab Int
     | PersonalMsg Personal.Msg
     | KodeverkMsg Kodeverk.Msg
+    | NavbarMsg Navbar.State
+    | OnLocationChange Location
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -45,47 +58,73 @@ update msg model =
         Mdl m ->
             Material.update Mdl m model
 
-        SelectTab nr ->
-            { model | selectedTab = nr } ! []
-
         PersonalMsg personalMsg ->
-            Helpers.lift
-                .personal
-                (\m x -> { m | personal = x })
-                PersonalMsg
-                Personal.update
-                personalMsg
-                model
+            Helpers.lift .personal (\m x -> { m | personal = x }) PersonalMsg Personal.update personalMsg model
 
-        KodeverkMsg msg_ ->
-            Helpers.lift .kodeverk (\m x -> { m | kodeverk = x }) KodeverkMsg Kodeverk.update msg_ model
+        KodeverkMsg kodeverkMsg ->
+            Helpers.lift .kodeverk (\m x -> { m | kodeverk = x }) KodeverkMsg Kodeverk.update kodeverkMsg model
+
+        NavbarMsg state ->
+            ( { model | navbarState = state }, Cmd.none )
+
+        OnLocationChange location ->
+            let
+                newRoute =
+                    parseLocation location
+            in
+                { model | selectedPage = newRoute } ! []
 
 
 view : Model -> Html Msg
 view model =
-    Layout.render Mdl
-        model.mdl
-        [ Layout.fixedHeader
-        , Layout.selectedTab model.selectedTab
-        , Layout.onSelectTab SelectTab
+    div []
+        [ navbarView model
+        , contentView model
         ]
-        { header = [ Layout.row [] [ Layout.title [] [ text "FINT klienteksempel" ] ] ]
-        , drawer = []
-        , tabs = ( [ text "Personal", text "Kodeverk" ], [] )
-        , main =
-            [ case model.selectedTab of
-                0 ->
-                    Html.map PersonalMsg (Personal.viewPersonal model.personal)
 
-                1 ->
-                    Html.map KodeverkMsg (Kodeverk.view model.kodeverk)
 
-                _ ->
-                    text "404"
+navbarView : Model -> Html Msg
+navbarView model =
+    Navbar.config NavbarMsg
+        |> Navbar.withAnimation
+        |> Navbar.brand [ Routing.href Index ]
+            [ img
+                [ src "src/assets/fint.svg"
+                , class "d-inline-block align-top"
+                , style [ ( "width", "75px" ), ( "margin-right", "10px" ) ]
+                ]
+                []
+            , text "API-demo"
             ]
-        }
+        |> Navbar.items
+            [ Navbar.itemLink [ Routing.href Personal ] [ text "Personal" ]
+            , Navbar.itemLink [ Routing.href Kodeverk ] [ text "Kodeverk" ]
+            ]
+        |> Navbar.view model.navbarState
+
+
+contentView : Model -> Html Msg
+contentView model =
+    Grid.container []
+        [ case model.selectedPage of
+            Index ->
+                Html.map PersonalMsg <| Personal.viewPersonal model.personal
+
+            Personal ->
+                Html.map PersonalMsg <| Personal.viewPersonal model.personal
+
+            Kodeverk ->
+                Html.map KodeverkMsg <| Kodeverk.view model.kodeverk
+
+            NotFound ->
+                text "404"
+        ]
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.none
+
+
+
+--Navbar.subscriptions model.navbarState NavbarMsg

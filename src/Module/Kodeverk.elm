@@ -1,13 +1,17 @@
 module Module.Kodeverk exposing (..)
 
 import Html exposing (..)
-import Html.Events
 import Http exposing (..)
+import Html.Attributes as Attr exposing (..)
 import Json.Decode as Decode
 import Material as Material
-import Material.Table as Table
-import Material.Progress as Loading
-import RemoteData exposing (RemoteData(NotAsked, Success, Loading, Failure), WebData, sendRequest)
+import RemoteData exposing (WebData, RemoteData(NotAsked, Loading, Failure, Success))
+import Bootstrap.Button as Button
+import Bootstrap.Grid as Grid
+import Bootstrap.Grid.Row as Row
+import Bootstrap.Grid.Col as Col
+import Bootstrap.Table as Table
+import Bootstrap.Progress as Progress
 
 
 -- MODEL
@@ -32,6 +36,7 @@ model =
     , kodeverk =
         [ ( "5218", "Kjønn" )
         , ( "31661alpha2", "Land" )
+        , ( "6391alpha2", "Språk" )
         ]
     , kodeliste = NotAsked
     }
@@ -63,17 +68,36 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div []
-        [ ul []
-            (model.kodeverk
-                |> List.map
-                    (\( a, b ) ->
-                        li [ Html.Events.onClick (LastKodeverk a) ] [ text (b ++ " " ++ a) ]
-                    )
-            )
+        [ Grid.row []
+            [ Grid.col [ Col.attrs [ Attr.align "right" ] ]
+                [ a [ href <| urlKodeverkIso "5218" ] [ text "api: 5218" ]
+                , text " | "
+                , a [ href "https://fintprosjektet.github.io/apidocs/#common-code-list" ] [ text "dokumentasjon" ]
+                , text " | "
+                , a [ href "https://dokumentasjon.felleskomponent.no/docs/" ] [ text "informasjonsmodell" ]
+                ]
+            ]
+        , Grid.row []
+            [ Grid.col []
+                (model.kodeverk
+                    |> List.map
+                        (\( a, b ) ->
+                            Button.button
+                                [ Button.secondary
+                                , Button.onClick (LastKodeverk a)
+                                , Button.attrs [ class "ml-1" ]
+                                ]
+                                [ text (b ++ " " ++ a) ]
+                        )
+                )
+            ]
         , case model.kodeliste of
             Success kodeliste ->
-                Table.table []
-                    [ Table.thead [] [ Table.tr [] [ Table.th [] [ text "Kode" ], Table.th [] [ text "Navn" ] ] ]
+                Table.simpleTable
+                    ( Table.simpleThead
+                        [ Table.th [] [ text "Kode" ]
+                        , Table.th [] [ text "Navn" ]
+                        ]
                     , Table.tbody []
                         (kodeliste
                             |> List.map
@@ -84,13 +108,13 @@ view model =
                                         ]
                                 )
                         )
-                    ]
+                    )
 
             NotAsked ->
-                text "Velg ett kodeverk i lista."
+                text "Velg ett kodeverk."
 
             Loading ->
-                div [] [ text "Henter data...", Loading.indeterminate ]
+                div [] [ text "Henter data...", Progress.progress [ Progress.value 100, Progress.animated ] ]
 
             Failure e ->
                 text <| "Feil: " ++ toString e
