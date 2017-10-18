@@ -1,15 +1,14 @@
 version: 1.0.{build}
+
+install:
+    - ps: Update-NodeJsInstallation (Get-NodeJsLatestBuild "6.0") x64
+    - npm install -g elm
+    - npm install -g create-elm-app
+    
 build_script:
-- cmd: >-
-    npm install -g elm
+    - elm-package install --yes
+    - elm-app build
 
-    npm install -g create-elm-app@0.3.2
-
-    npm install -g glob
-
-    elm-app build
 deploy_script:
-- cmd: >-
-    npm install -g firebase-tools@3.5.0
-
-    firebase deploy --non-interactive --only hosting --project fint-consumer-client-elm  --token="%FIREBASE_API_TOKEN%"
+    - npm install -g firebase-tools
+    - firebase deploy --non-interactive --only hosting --project fint-consumer-client-elm  --token="%FIREBASE_API_TOKEN%"
