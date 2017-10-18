@@ -4,7 +4,6 @@ import Bootstrap.Grid as Grid
 import Bootstrap.Navbar as Navbar
 import Html exposing (..)
 import Html.Attributes as Attribute exposing (..)
-import Material as Material
 import Helpers as Helpers
 import Module.Kodeverk as Kodeverk
 import Module.Personal as Personal
@@ -13,8 +12,7 @@ import Routing exposing (..)
 
 
 type alias Model =
-    { mdl : Material.Model
-    , personal : Personal.Model
+    { personal : Personal.Model
     , kodeverk : Kodeverk.Model
     , navbarState : Navbar.State
     , selectedPage : Page
@@ -29,9 +27,7 @@ init page logo =
             Navbar.initialState NavbarMsg
 
         model =
-            { -- mdl kan snart fjernes :)
-              mdl = Material.model
-            , personal = Personal.model
+            { personal = Personal.model
             , kodeverk = Kodeverk.model
             , navbarState = navbarState
             , selectedPage = page
@@ -47,8 +43,7 @@ init page logo =
 
 
 type Msg
-    = Mdl (Material.Msg Msg)
-    | PersonalMsg Personal.Msg
+    = PersonalMsg Personal.Msg
     | KodeverkMsg Kodeverk.Msg
     | NavbarMsg Navbar.State
     | OnLocationChange Location
@@ -57,9 +52,6 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Mdl m ->
-            Material.update Mdl m model
-
         PersonalMsg personalMsg ->
             Helpers.lift .personal (\m x -> { m | personal = x }) PersonalMsg Personal.update personalMsg model
 
@@ -110,10 +102,10 @@ contentView model =
     Grid.container []
         [ case model.selectedPage of
             Index ->
-                Html.map PersonalMsg <| Personal.viewPersonal model.personal
+                Html.map PersonalMsg <| Personal.view model.personal
 
             Personal ->
-                Html.map PersonalMsg <| Personal.viewPersonal model.personal
+                Html.map PersonalMsg <| Personal.view model.personal
 
             Kodeverk ->
                 Html.map KodeverkMsg <| Kodeverk.view model.kodeverk

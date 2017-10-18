@@ -4,7 +4,6 @@ import Bootstrap.Button as Button
 import Bootstrap.Form.Input as Input
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
-import Bootstrap.Grid.Row as Row
 import Bootstrap.ListGroup as ListGroup
 import Bootstrap.Progress as Progress
 import Html exposing (..)
@@ -14,9 +13,8 @@ import Http exposing (..)
 import Material
 import Material.Card as Card
 import Material.Elevation as Elevation
-import Module.Personal.Arbeidsforhold as Arbeidsforhold exposing (Arbeidsforhold)
-import Module.Personal.Person as Person exposing (Person, Postadresse)
-import Module.Personal.Personalressurs as Personalressurs exposing (Personalressurs)
+import Model.Felles as Person exposing (Person, Adresse)
+import Model.Administrasjon as Administrasjon
 import RemoteData exposing (RemoteData(Failure), RemoteData(Loading), RemoteData(NotAsked, Success), WebData)
 
 
@@ -26,8 +24,8 @@ import RemoteData exposing (RemoteData(Failure), RemoteData(Loading), RemoteData
 type alias Model =
     { mdl : Material.Model
     , personer : WebData (List Person)
-    , personalressurs : WebData Personalressurs
-    , arbeidsforhold : WebData Arbeidsforhold
+    , personalressurs : WebData Administrasjon.Personalressurs
+    , arbeidsforhold : WebData Administrasjon.Arbeidsforhold
     , selectedPerson : Maybe Person
     , soek : String
     }
@@ -54,8 +52,8 @@ type Msg
     | GetPersonalressurs String
     | GetArbeidsforhold String
     | PersonsResponse (WebData (List Person))
-    | PersonalressursResponse (WebData Personalressurs)
-    | ArbeidsforholdResponse (WebData Arbeidsforhold)
+    | PersonalressursResponse (WebData Administrasjon.Personalressurs)
+    | ArbeidsforholdResponse (WebData Administrasjon.Arbeidsforhold)
     | VelgPerson Person
     | StartSok String
 
@@ -103,8 +101,8 @@ update msg model =
 -- VIEW
 
 
-viewPersonal : Model -> Html Msg
-viewPersonal model =
+view : Model -> Html Msg
+view model =
     div []
         [ Grid.row []
             [ Grid.col [ Col.lg4 ]
@@ -136,7 +134,7 @@ visEnPerson model =
             Card.view [ Elevation.e2 ]
                 [ Card.title []
                     [ Card.head []
-                        [ text <| p.navn.fornavn ++ " " ++ p.navn.mellomnavn ++ " " ++ p.navn.etternavn
+                        [ text <| p.navn.fornavn ++ " " ++ " " ++ p.navn.etternavn
                         ]
                     ]
                 , Card.text []
@@ -153,7 +151,7 @@ visEnPerson model =
                 ]
 
 
-viewPostadresse : Postadresse -> Html Msg
+viewPostadresse : Adresse -> Html Msg
 viewPostadresse postadresse =
     Html.p []
         [ text postadresse.adresse
@@ -197,7 +195,7 @@ viewPersoner model =
                         model
                     )
                     (personer
-                        |> List.filter (String.contains model.soek << .foedselsnummer)
+                     --|> List.filter (String.contains model.soek << .fodselsnummer )
                     )
 
 
@@ -286,11 +284,9 @@ viewPerson model person =
                     (person.navn.etternavn
                         ++ ", "
                         ++ person.navn.fornavn
-                        ++ " "
-                        ++ person.navn.mellomnavn
                     )
                 ]
-            , small [] [ text person.foedselsnummer ]
+            , small [] [ text person.foedselsnummer.identifikatorverdi ]
             ]
         , p [ class "mb-1" ]
             [ text
@@ -312,7 +308,7 @@ viewPerson model person =
 
 urlPersoner : String
 urlPersoner =
-    "https://api.felleskomponent.no/mocks/administrasjon/personal/person"
+    "https://play-with-fint.felleskomponent.no/administrasjon/personal/person/"
 
 
 getPersoner : String -> Cmd Msg
@@ -324,13 +320,13 @@ getPersoner url =
 
 getPersonalressurs : String -> Cmd Msg
 getPersonalressurs url =
-    Http.get url Personalressurs.decodePersonalressurs
+    Http.get url Administrasjon.decodePersonalressurs
         |> RemoteData.sendRequest
         |> Cmd.map PersonalressursResponse
 
 
 getArbeidsforhold : String -> Cmd Msg
 getArbeidsforhold url =
-    Http.get url Arbeidsforhold.decodeArbeidsforholder
+    Http.get url Administrasjon.decodeArbeidsforholder
         |> RemoteData.sendRequest
         |> Cmd.map ArbeidsforholdResponse
