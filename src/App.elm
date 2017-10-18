@@ -17,11 +17,12 @@ type alias Model =
     , navbarState : Navbar.State
     , selectedPage : Page
     , logo : String
+    , debug : Bool
     }
 
 
-init : Page -> String -> ( Model, Cmd Msg )
-init page logo =
+init : Page -> String -> Bool -> ( Model, Cmd Msg )
+init page logo debug =
     let
         ( navbarState, navbarCmd ) =
             Navbar.initialState NavbarMsg
@@ -32,6 +33,7 @@ init page logo =
             , navbarState = navbarState
             , selectedPage = page
             , logo = logo
+            , debug = debug
             }
     in
         ( model

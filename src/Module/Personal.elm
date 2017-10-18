@@ -13,6 +13,7 @@ import Http exposing (..)
 import Material
 import Material.Card as Card
 import Material.Elevation as Elevation
+import Hateoas as Hateoas
 import Model.Felles as Person exposing (Person, Adresse)
 import Model.Administrasjon as Administrasjon
 import RemoteData exposing (RemoteData(Failure), RemoteData(Loading), RemoteData(NotAsked, Success), WebData)
@@ -143,7 +144,11 @@ visEnPerson model =
                 , Card.actions [ Card.border ]
                     [ Button.button
                         [ Button.attrs
-                            [--onClick (GetPersonalressurs p.links.personalressurs)
+                            [ onClick
+                                (p.links.personalressurs
+                                    |> Hateoas.headHref
+                                    |> GetPersonalressurs
+                                )
                             ]
                         ]
                         [ text "Vis Personalressurs" ]
@@ -154,8 +159,9 @@ visEnPerson model =
 viewPostadresse : Adresse -> Html Msg
 viewPostadresse postadresse =
     Html.p []
-        [ text postadresse.adresse
-        , Html.br []
+        [ --text postadresse.adresselinje
+          --,
+          Html.br []
             []
         , text
             (postadresse.postnummer
@@ -231,7 +237,7 @@ viewPersonalressurs model =
                 , Card.actions [ Card.border ]
                     [ Button.button
                         [ Button.attrs
-                            [ onClick (GetArbeidsforhold pr.links.arbeidsforhold)
+                            [--onClick (GetArbeidsforhold pr.links.arbeidsforhold)
                             ]
                         ]
                         [ text "Vis arbeidsforhold" ]
@@ -289,17 +295,23 @@ viewPerson model person =
             , small [] [ text person.foedselsnummer.identifikatorverdi ]
             ]
         , p [ class "mb-1" ]
-            [ text
-                ("Adresse: "
-                    ++ person.postadresse.adresse
-                    ++ ", "
-                    ++ person.postadresse.postnummer
-                    ++ " "
-                    ++ person.postadresse.poststed
-                )
-            ]
+            [ printAdresse person.postadresse ]
         , small [] [ text person.kontatinformasjon.epostadresse ]
         ]
+
+
+printAdresse : Adresse -> Html msg
+printAdresse postadresse =
+    [ "Adresse: "
+    , postadresse.adresselinje
+        |> String.join ", "
+    , ", "
+    , postadresse.postnummer
+    , " "
+    , postadresse.poststed
+    ]
+        |> String.concat
+        |> text
 
 
 
@@ -308,7 +320,8 @@ viewPerson model person =
 
 urlPersoner : String
 urlPersoner =
-    "https://play-with-fint.felleskomponent.no/administrasjon/personal/person/"
+    --" http://localhost:3010/administrasjon-personal-person"
+    "https://play-with-fint.felleskomponent.no/administrasjon/personal/person"
 
 
 getPersoner : String -> Cmd Msg

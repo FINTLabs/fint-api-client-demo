@@ -1,5 +1,6 @@
 module Model.Administrasjon exposing (..)
 
+import Hateoas as Hateoas
 import Json.Decode as Decode exposing (Decoder, at, field, string, nullable, list, map, map2, map3, map4, map5)
 import Json.Decode.Pipeline exposing (decode, required, optional, requiredAt, optionalAt)
 
@@ -26,20 +27,31 @@ type alias Stillingskode =
 
 
 type alias Links =
-    { self : String
-    , arbeidsforhold : String
+    { self : List Hateoas.Href
+    , arbeidsforhold : List Hateoas.Href
     }
 
 
 {-| Decode personalressurs
 -}
-decodePersonalressurs : Decode.Decoder Personalressurs
+decodePersonalressurs : Decoder Personalressurs
 decodePersonalressurs =
-    Decode.map4 Personalressurs
-        (at [ "ansattnummer", "identifikatorverdi" ] Decode.string)
-        (at [ "brukernavn", "identifikatorverdi" ] Decode.string)
-        (at [ "personalressurskategori", "navn" ] Decode.string)
-        (field "_links" decodeLinks)
+    decode Personalressurs
+        |> requiredAt [ "ansattnummer", "identifikatorverdi" ] string
+        |> requiredAt [ "brukernavn", "identifikatorverdi" ] string
+        |> requiredAt [ "brukernavn", "identifikatorverdi" ] string
+        |> required "_links" decodeLinks
+
+
+decodeLinks : Decoder Links
+decodeLinks =
+    decode Links
+        |> required "self" (list Hateoas.decodeHrefs)
+        |> required "arbeidsforhold" (list Hateoas.decodeHrefs)
+
+
+
+--|> required "_links" Hateoas.decodeLinks
 
 
 {-| Decode a single arbeidsforhold
@@ -56,10 +68,3 @@ decodeArbeidsforholder =
         Decode.map2 Arbeidsforhold
             (field "stillingsnummer" Decode.string)
             (field "stillingskode" decodeStillingskode)
-
-
-decodeLinks : Decode.Decoder Links
-decodeLinks =
-    decode Links
-        |> requiredAt [ "self", "href" ] string
-        |> requiredAt [ "arbeidsforhold", "href" ] string

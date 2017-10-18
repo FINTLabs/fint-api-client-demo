@@ -1,6 +1,7 @@
 module Model.Felles exposing (..)
 
 import Date
+import Hateoas as Hateoas
 import Json.Decode as JD exposing (Decoder, at, field, list, map, map2, map3, map4, map5, nullable, string, andThen, succeed, fail)
 import Json.Decode.Pipeline as JP exposing (decode, optional, optionalAt, required, requiredAt)
 
@@ -16,7 +17,7 @@ type alias Person =
     , fodselsdato : Date.Date
     , kontatinformasjon : Kontaktinformasjon
     , postadresse : Adresse
-    , links : Links
+    , links : Hateoas.Links
     }
 
 
@@ -44,7 +45,7 @@ type alias Personnavn =
 
 
 type alias Adresse =
-    { adresse : String
+    { adresselinje : List String
     , postnummer : String
     , poststed : String
     , land : String
@@ -54,25 +55,9 @@ type alias Adresse =
 type alias Kontaktinformasjon =
     { epostadresse :
         String
-
-    -- telefonnummer?
+        -- telefonnummer?
     , mobiltelefonummer : Maybe String
     , nettsted : String
-    }
-
-
-
--- MÅ FLYTTES
-
-
-type alias Links =
-    { self : List Href
-    , personalressurs : List Href
-    }
-
-
-type alias Href =
-    { href : String
     }
 
 
@@ -91,15 +76,15 @@ decodePerson =
         |> required "fodselsdato" decodeUnixTimestamp
         |> required "kontaktinformasjon" decodeKontaktinformasjon
         |> required "postadresse" decodeAdresse
-        |> requiredAt [ "_links" ] decodeLinks
+        |> required "_links" Hateoas.decodeLinks
 
 
 decodeUnixTimestamp : Decoder Date.Date
 decodeUnixTimestamp =
-    JD.float
+    JD.string
         |> andThen
             (\f ->
-                succeed <| Date.fromTime f
+                succeed <| (Date.fromString f |> Result.withDefault (Date.fromTime 0))
             )
 
 
@@ -128,7 +113,7 @@ decodePersonnavn =
 decodeAdresse : Decoder Adresse
 decodeAdresse =
     decode Adresse
-        |> optional "adresse" string ""
+        |> optional "adresselinje" (list string) []
         |> optional "postnummer" string ""
         |> optional "poststed" string ""
         |> optionalAt [ "land", "kode" ] string ""
@@ -140,15 +125,3 @@ decodeKontaktinformasjon =
         |> optional "epostadresse" string ""
         |> optional "mobiltelefonummer" (nullable string) (Nothing)
         |> optional "nettsted" string ""
-
-
-decodeLinks : Decoder Links
-decodeLinks =
-    decode Links
-        |> required "self" (list decodeX)
-        |> required "personalressurs" (list decodeX)
-
-
-decodeX =
-    decode Href
-        |> optional "href" string ""

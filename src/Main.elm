@@ -5,16 +5,22 @@ import Routing as Routing
 import Navigation exposing (Location)
 
 
-init : String -> Location -> ( Model, Cmd Msg )
-init logo location =
+type alias Input =
+    { logo : String
+    , debug : Bool
+    }
+
+
+init : Input -> Location -> ( Model, Cmd Msg )
+init input location =
     let
         currentPage =
             Routing.parseLocation location
     in
-        App.init currentPage logo
+        App.init currentPage input.logo input.debug
 
 
-main : Program String Model Msg
+main : Program Input Model Msg
 main =
     Navigation.programWithFlags
         App.OnLocationChange
