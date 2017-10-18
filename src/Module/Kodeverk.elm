@@ -95,7 +95,7 @@ view model =
             Success kodeliste ->
                 Table.simpleTable
                     ( Table.simpleThead
-                        [ Table.th [] [ text "systemId" ]
+                        [ Table.th [] [ text "SystemId" ]
                         , Table.th [] [ text "Kode" ]
                         , Table.th [] [ text "Navn" ]
                         ]

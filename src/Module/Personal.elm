@@ -143,7 +143,7 @@ visEnPerson model =
                 , Card.actions [ Card.border ]
                     [ Button.button
                         [ Button.attrs
-                            [ onClick (GetPersonalressurs p.links.personalressurs)
+                            [--onClick (GetPersonalressurs p.links.personalressurs)
                             ]
                         ]
                         [ text "Vis Personalressurs" ]

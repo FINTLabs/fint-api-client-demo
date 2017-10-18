@@ -54,7 +54,8 @@ type alias Adresse =
 type alias Kontaktinformasjon =
     { epostadresse :
         String
-        -- telefonnummer?
+
+    -- telefonnummer?
     , mobiltelefonummer : Maybe String
     , nettsted : String
     }
@@ -65,8 +66,13 @@ type alias Kontaktinformasjon =
 
 
 type alias Links =
-    { self : String
-    , personalressurs : String
+    { self : List Href
+    , personalressurs : List Href
+    }
+
+
+type alias Href =
+    { href : String
     }
 
 
@@ -139,5 +145,10 @@ decodeKontaktinformasjon =
 decodeLinks : Decoder Links
 decodeLinks =
     decode Links
-        |> requiredAt [ "self", "href" ] string
-        |> requiredAt [ "personalressurs", "href" ] string
+        |> required "self" (list decodeX)
+        |> required "personalressurs" (list decodeX)
+
+
+decodeX =
+    decode Href
+        |> optional "href" string ""
