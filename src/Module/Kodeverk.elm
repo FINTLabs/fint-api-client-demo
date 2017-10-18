@@ -8,7 +8,6 @@ import Material as Material
 import RemoteData exposing (WebData, RemoteData(NotAsked, Loading, Failure, Success))
 import Bootstrap.Button as Button
 import Bootstrap.Grid as Grid
-import Bootstrap.Grid.Row as Row
 import Bootstrap.Grid.Col as Col
 import Bootstrap.Table as Table
 import Bootstrap.Progress as Progress
@@ -25,7 +24,8 @@ type alias Model =
 
 
 type alias Begrep =
-    { kode : String
+    { systemId : String
+    , kode : String
     , navn : String
     }
 
@@ -95,7 +95,8 @@ view model =
             Success kodeliste ->
                 Table.simpleTable
                     ( Table.simpleThead
-                        [ Table.th [] [ text "Kode" ]
+                        [ Table.th [] [ text "systemId" ]
+                        , Table.th [] [ text "Kode" ]
                         , Table.th [] [ text "Navn" ]
                         ]
                     , Table.tbody []
@@ -103,7 +104,8 @@ view model =
                             |> List.map
                                 (\kode ->
                                     Table.tr []
-                                        [ Table.td [] [ text kode.kode ]
+                                        [ Table.td [] [ text kode.systemId ]
+                                        , Table.td [] [ text kode.kode ]
                                         , Table.td [] [ text kode.navn ]
                                         ]
                                 )
@@ -137,9 +139,14 @@ lastKodeverk iso =
         url =
             urlKodeverkIso iso
     in
-        Http.get url decodeKodeverk
+        Http.get url decodeEmbeddedEntries
             |> RemoteData.sendRequest
             |> Cmd.map KodeverkResponse
+
+
+decodeEmbeddedEntries : Decode.Decoder (List Begrep)
+decodeEmbeddedEntries =
+    Decode.at [ "_embedded", "_entries" ] decodeKodeverk
 
 
 decodeKodeverk : Decode.Decoder (List Begrep)
@@ -149,6 +156,7 @@ decodeKodeverk =
 
 decodeBegrep : Decode.Decoder Begrep
 decodeBegrep =
-    Decode.map2 Begrep
+    Decode.map3 Begrep
+        (Decode.at [ "systemId", "identifikatorverdi" ] Decode.string)
         (Decode.field "kode" Decode.string)
         (Decode.field "navn" Decode.string)
