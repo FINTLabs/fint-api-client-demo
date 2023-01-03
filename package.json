@@ -4,7 +4,7 @@
   "description": "Eksempel-klient for å teste funksjonalitet i API til felleskomponent til [FINT-prosjektet](http://fintprosjektet.no)",
   "main": "index.js",
   "devDependencies": {
-    "create-elm-app": "^1.8.0",
+    "create-elm-app": "^5.22.0",
     "elm": "0.18.0",
     "json-server": "0.12.0"
   },
